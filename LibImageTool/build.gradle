@@ -1,0 +1,47 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release'
+
+def version = "2016.12.29.1"
+
+android {
+	compileSdkVersion 25
+	buildToolsVersion "25.0.1"
+	defaultConfig {
+		minSdkVersion 16
+		targetSdkVersion 25
+		versionCode 1
+		versionName version
+	}
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+		}
+	}
+	lintOptions {
+		abortOnError false
+		checkReleaseBuilds false
+	}
+}
+
+dependencies {
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+	compile 'com.facebook.fresco:fresco:0.12.0'
+}
+
+publish {
+	userOrg = 'tp6gl4cj86'
+	groupId = 'tw.com.tp6gl4cj86'
+	artifactId = 'image_tool'
+	publishVersion = version
+	desc = 'ImageTool'
+	website = 'https://github.com/tp6gl4cj86/ImageTool'
+}
+
+ext {
+	PUBLISH_GROUP_ID = 'tw.com.tp6gl4cj86'
+	PUBLISH_ARTIFACT_ID = 'image_tool'
+	PUBLISH_VERSION = version
+}
+
+apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'

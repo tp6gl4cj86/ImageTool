@@ -10,6 +10,6 @@ Add dependency.
 
 ```
 dependencies {
-    compile 'tw.com.tp6gl4cj86:image_tool:2016.12.29.1'
+    compile 'tw.com.tp6gl4cj86:image_tool:1.0.0'
 }
 ```

@@ -1,6 +1,5 @@
 package tw.com.tp6gl4cj86.image_tool;
 
-import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -40,17 +39,17 @@ public class ImageTool
      * <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
      * <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
      */
-    public static void init(Activity activity)
+    public static void init(Context context)
     {
         //        final DiskCacheConfig diskCacheConfig = DiskCacheConfig.newBuilder(activity)
         //                                                               .setMaxCacheSize(40 * ByteConstants.MB)
         //                                                               .build();
         //
-        final ImagePipelineConfig config = ImagePipelineConfig.newBuilder(activity)
+        final ImagePipelineConfig config = ImagePipelineConfig.newBuilder(context)
                                                               .setDownsampleEnabled(true)
                                                               //.setMainDiskCacheConfig(diskCacheConfig)
                                                               .build();
-        Fresco.initialize(activity);
+        Fresco.initialize(context);
     }
 
     public static void removeCache(String url)
@@ -130,21 +129,21 @@ public class ImageTool
         image.setController(controller);
     }
 
-    public static void setCornersRadius(Activity activity, SimpleDraweeView image, float radius)
+    public static void setCornersRadius(Context context, SimpleDraweeView image, float radius)
     {
-        final GenericDraweeHierarchyBuilder genericDraweeHierarchyBuilder = new GenericDraweeHierarchyBuilder(activity.getResources());
+        final GenericDraweeHierarchyBuilder genericDraweeHierarchyBuilder = new GenericDraweeHierarchyBuilder(context.getResources());
         genericDraweeHierarchyBuilder.setRoundingParams(RoundingParams.fromCornersRadius(radius));
         image.setHierarchy(genericDraweeHierarchyBuilder.build());
     }
 
-    public static void setCornersRadius(Activity activity, SimpleDraweeView image, float[] radius)
+    public static void setCornersRadius(Context context, SimpleDraweeView image, float[] radius)
     {
         if (radius.length < 4)
         {
             return;
         }
 
-        final GenericDraweeHierarchyBuilder genericDraweeHierarchyBuilder = new GenericDraweeHierarchyBuilder(activity.getResources());
+        final GenericDraweeHierarchyBuilder genericDraweeHierarchyBuilder = new GenericDraweeHierarchyBuilder(context.getResources());
         genericDraweeHierarchyBuilder.setRoundingParams(RoundingParams.fromCornersRadii(radius[0], radius[1], radius[2], radius[3]));
         image.setHierarchy(genericDraweeHierarchyBuilder.build());
     }
@@ -266,9 +265,9 @@ public class ImageTool
     /**
      * @param imageFileUri Uri.fromFile(new File(Environment.getExternalStorageDirectory(), "temp.jpg"));
      */
-    public static long saveImageFromUrl(Activity activity, String url, Uri imageFileUri, String title, String description)
+    public static long saveImageFromUrl(Context context, String url, Uri imageFileUri, String title, String description)
     {
-        final DownloadManager downloadManager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+        final DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
 
         final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 

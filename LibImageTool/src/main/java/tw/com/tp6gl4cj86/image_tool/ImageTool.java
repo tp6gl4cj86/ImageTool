@@ -11,9 +11,12 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import android.os.Handler;
 import android.widget.ImageView;
 
+import com.facebook.common.executors.CallerThreadExecutor;
+import com.facebook.common.references.CloseableReference;
+import com.facebook.datasource.DataSource;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.controller.ControllerListener;
@@ -21,8 +24,13 @@ import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
 import com.facebook.drawee.generic.RoundingParams;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.core.ImagePipeline;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
+import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber;
+import com.facebook.imagepipeline.image.CloseableImage;
 import com.facebook.imagepipeline.image.ImageInfo;
+import com.facebook.imagepipeline.request.ImageRequest;
+import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,7 +121,7 @@ public class ImageTool
         final ControllerListener<ImageInfo> controllerListener = new BaseControllerListener<ImageInfo>()
         {
             @Override
-            public void onFinalImageSet(String id, @Nullable ImageInfo imageInfo, @Nullable Animatable anim)
+            public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable anim)
             {
                 if (imageInfo != null && image != null)
                 {
@@ -158,6 +166,51 @@ public class ImageTool
             image.getHierarchy()
                  .setRoundingParams(roundingParams);
         }
+    }
+
+    public interface OnDownloadImageListener
+    {
+        public void onDownloadImageDone(Bitmap bitmap);
+    }
+
+    public static void downloadImage(Context context, String url, final OnDownloadImageListener listener)
+    {
+        final Handler handler = new Handler();
+        final ImageRequest imageRequest = ImageRequestBuilder.newBuilderWithSource(Uri.parse(url))
+                                                             .build();
+        final ImagePipeline imagePipeline = Fresco.getImagePipeline();
+        final DataSource<CloseableReference<CloseableImage>> dataSource = imagePipeline.fetchDecodedImage(imageRequest, context);
+        dataSource.subscribe(new BaseBitmapDataSubscriber()
+        {
+            @Override
+            public void onNewResultImpl(final Bitmap bitmap)
+            {
+                if (dataSource.isFinished() && bitmap != null)
+                {
+                    handler.post(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            if (listener != null)
+                            {
+                                listener.onDownloadImageDone(Bitmap.createBitmap(bitmap));
+                            }
+                        }
+                    });
+                    dataSource.close();
+                }
+            }
+
+            @Override
+            public void onFailureImpl(DataSource dataSource)
+            {
+                if (dataSource != null)
+                {
+                    dataSource.close();
+                }
+            }
+        }, CallerThreadExecutor.getInstance());
     }
 
     /*

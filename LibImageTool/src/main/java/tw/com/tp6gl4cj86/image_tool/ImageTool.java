@@ -57,7 +57,7 @@ public class ImageTool
                                                               .setDownsampleEnabled(true)
                                                               //.setMainDiskCacheConfig(diskCacheConfig)
                                                               .build();
-        Fresco.initialize(context);
+        Fresco.initialize(context, config);
     }
 
     public static void removeCache(String url)

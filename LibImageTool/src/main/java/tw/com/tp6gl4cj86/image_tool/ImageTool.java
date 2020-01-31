@@ -187,17 +187,21 @@ public class ImageTool
             {
                 if (dataSource.isFinished() && bitmap != null)
                 {
-                    handler.post(new Runnable()
+                    if (!bitmap.isRecycled())
                     {
-                        @Override
-                        public void run()
+                        final Bitmap bitmap2 = Bitmap.createBitmap(bitmap);
+                        handler.post(new Runnable()
                         {
-                            if (listener != null)
+                            @Override
+                            public void run()
                             {
-                                listener.onDownloadImageDone(Bitmap.createBitmap(bitmap));
+                                if (listener != null)
+                                {
+                                    listener.onDownloadImageDone(bitmap2);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                     dataSource.close();
                 }
             }

@@ -1,14 +1,14 @@
 apply plugin: 'bintray-release'
 apply plugin: 'com.android.library'
 
-def version = "4.0.1"
+def version = "4.0.2"
 
 android {
 	compileSdkVersion 29
 	defaultConfig {
 		minSdkVersion 16
 		targetSdkVersion 29
-		versionCode 401
+		versionCode 402
 		versionName version
 	}
 	buildTypes {

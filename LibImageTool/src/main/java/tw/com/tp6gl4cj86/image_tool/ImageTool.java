@@ -198,16 +198,21 @@ public class ImageTool
                                 if (listener != null)
                                 {
                                     listener.onDownloadImageDone(bitmap2);
+                                    closeDataSource(dataSource);
                                 }
                             }
                         });
                     }
-                    dataSource.close();
                 }
             }
 
             @Override
             public void onFailureImpl(DataSource dataSource)
+            {
+                closeDataSource(dataSource);
+            }
+
+            private void closeDataSource(DataSource dataSource)
             {
                 if (dataSource != null)
                 {

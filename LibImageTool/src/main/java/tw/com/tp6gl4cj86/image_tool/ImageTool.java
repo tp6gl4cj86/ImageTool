@@ -55,6 +55,8 @@ public class ImageTool
         //
         final ImagePipelineConfig config = ImagePipelineConfig.newBuilder(context)
                                                               .setDownsampleEnabled(true)
+                                                              .setResizeAndRotateEnabledForNetwork(true)
+                                                              //.setBitmapsConfig(Bitmap.Config.RGB_565)    //图片设置RGB_565，减小内存开销  fresco默认情况下是RGB_8888
                                                               //.setMainDiskCacheConfig(diskCacheConfig)
                                                               .build();
         Fresco.initialize(context, config);

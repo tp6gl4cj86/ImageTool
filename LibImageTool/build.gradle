@@ -1,15 +1,20 @@
-apply plugin: 'bintray-release'
-apply plugin: 'com.android.library'
+plugins {
+	id 'com.android.library'
+	id 'kotlin-android'
+	id 'maven-publish'
+}
 
-def version = "4.0.4"
+def versionStr = "5.0.0"
 
 android {
-	compileSdkVersion 29
+	namespace = 'tw.com.tp6gl4cj86.image_tool'
+	compileSdk 33
+
 	defaultConfig {
-		minSdkVersion 16
-		targetSdkVersion 29
-		versionCode 404
-		versionName version
+		minSdk 19
+		targetSdk 33
+		versionCode 500
+		versionName versionStr
 	}
 	buildTypes {
 		release {
@@ -17,10 +22,13 @@ android {
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 		}
 	}
-//	lintOptions {
-//		abortOnError false
-//		checkReleaseBuilds false
-//	}
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_17
+		targetCompatibility JavaVersion.VERSION_17
+	}
+	kotlinOptions {
+		jvmTarget = '17'
+	}
 }
 
 dependencies {
@@ -31,19 +39,16 @@ dependencies {
 	api 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.3.0'
 }
 
-publish {
-	userOrg = 'tp6gl4cj86'
-	groupId = 'tw.com.tp6gl4cj86'
-	artifactId = 'image_tool'
-	publishVersion = version
-	desc = 'ImageTool'
-	website = 'https://github.com/tp6gl4cj86/ImageTool'
-}
+afterEvaluate {
+	publishing {
+		publications {
+			release(MavenPublication) {
+				from components.release
 
-ext {
-	PUBLISH_GROUP_ID = 'tw.com.tp6gl4cj86'
-	PUBLISH_ARTIFACT_ID = 'image_tool'
-	PUBLISH_VERSION = version
+				groupId = 'tw.com.tp6gl4cj86'
+				artifactId = 'image_tool'
+				version = versionStr
+			}
+		}
+	}
 }
-
-apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'

@@ -3,27 +3,19 @@
 buildscript {
 	repositories {
 		jcenter()
-		maven {
-			url 'https://maven.google.com/'
-			name 'Google'
-		}
+		mavenCentral()
+		google()
 	}
 	dependencies {
-		classpath 'com.android.tools.build:gradle:3.5.3'
-		classpath 'com.novoda:bintray-release:0.8.0'
+		classpath "com.android.tools.build:gradle:8.0.2"
+		classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
 	}
 }
 
 allprojects {
 	repositories {
 		jcenter()
-		maven {
-			url 'https://maven.google.com/'
-			name 'Google'
-		}
+		mavenCentral()
+		google()
 	}
-}
-
-task clean(type: Delete) {
-	delete rootProject.buildDir
 }

@@ -15,7 +15,6 @@ import jp.wasabeef.fresco.processors.BlurPostprocessor;
 public class BlurTool
 {
 
-
     public static void blur(Activity activity, SimpleDraweeView mImage, String url)
     {
         blur(activity, 12, mImage, url);

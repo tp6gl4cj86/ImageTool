@@ -41,7 +41,6 @@ import java.io.IOException;
 public class ImageTool
 {
 
-
     /**
      * <uses-permission android:name="android.permission.INTERNET" />
      * <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

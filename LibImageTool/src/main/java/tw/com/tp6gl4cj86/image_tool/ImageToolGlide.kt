@@ -1,6 +1,7 @@
 package tw.com.tp6gl4cj86.image_tool
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorFilter
@@ -21,12 +22,76 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.imageview.ShapeableImageView
+import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.fitWidth
+import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.loadImage
+import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setBorder
+import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setCornersRadius
 import kotlin.math.max
 
 object ImageToolGlide {
 
     private fun isValidContext(context: Context?): Boolean {
         return !(context == null || (context is android.app.Activity && (context.isDestroyed || context.isFinishing)))
+    }
+
+    @JvmStatic
+    fun setCornersRadius(image: ShapeableImageView, radius: Any) {
+        // 動態設定 ShapeableImageView 的圓角
+        when (radius) {
+            is Number -> {
+                image.shapeAppearanceModel = image.shapeAppearanceModel.toBuilder().apply {
+                    setAllCornerSizes(radius.toFloat())
+                }.build()
+            }
+
+            is IntArray -> {
+                if (radius.size >= 4) {
+                    image.shapeAppearanceModel = image.shapeAppearanceModel.toBuilder().apply {
+                        setTopLeftCornerSize(radius[0].toFloat())
+                        setTopRightCornerSize(radius[1].toFloat())
+                        setBottomRightCornerSize(radius[2].toFloat())
+                        setBottomLeftCornerSize(radius[3].toFloat())
+                    }.build()
+                }
+            }
+
+            is FloatArray -> {
+                // 如果是 FloatArray，設定四角獨立
+                if (radius.size >= 4) {
+                    image.shapeAppearanceModel = image.shapeAppearanceModel.toBuilder().apply {
+                        setTopLeftCornerSize(radius[0])
+                        setTopRightCornerSize(radius[1])
+                        setBottomRightCornerSize(radius[2])
+                        setBottomLeftCornerSize(radius[3])
+                    }.build()
+                }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun setBorder(image: ShapeableImageView, borderWidthPx: Float, @ColorInt borderColor: Int) {
+        setBorder(image, borderWidthPx, intArrayOf(borderColor))
+    }
+
+    @JvmStatic
+    fun setBorder(image: ShapeableImageView, borderWidthPx: Float, @ColorInt borderColor: IntArray) {
+        if (borderWidthPx > 0) {
+            val shapeModel = image.shapeAppearanceModel
+            val tl = shapeModel.topLeftCornerSize.getCornerSize(RectF())
+            val tr = shapeModel.topRightCornerSize.getCornerSize(RectF())
+            val br = shapeModel.bottomRightCornerSize.getCornerSize(RectF())
+            val bl = shapeModel.bottomLeftCornerSize.getCornerSize(RectF())
+
+            // 轉換為 Drawable 需要的 8 個數值陣列 [tl_x, tl_y, tr_x, tr_y, ...]
+            val radii = floatArrayOf(tl, tl, tr, tr, br, br, bl, bl)
+
+            // 將自定義的邊框 Drawable 塞入前景
+            image.foreground = InnerBorderDrawable(radii, borderWidthPx, borderColor)
+        } else {
+            image.strokeWidth = 0f
+            image.foreground = null
+        }
     }
 
     @JvmStatic
@@ -67,85 +132,15 @@ object ImageToolGlide {
     }
 
     @JvmStatic
-    fun loadImage(image: ImageView, url: String?) {
-        if (url == null || !isValidContext(image.context)) {
-            return
-        }
-        Glide.with(image)
-            .load(url)
-            .into(image)
-    }
-
-    @JvmStatic
-    fun loadImage(image: ShapeableImageView, url: String?, radius: Float) {
-        loadImage(image, url, radius, null, null)
-    }
-
-    @JvmStatic
-    fun loadImage(image: ShapeableImageView, url: String?, radius: FloatArray) {
-        loadImage(image, url, radius, null, null)
-    }
-
-    fun loadImage(
-        image: ShapeableImageView,
-        url: String?,
-        radius: Any,
-        borderWidthPx: Float,
-        @ColorInt borderColor: Int // (Color.RED 或 ContextCompat.getColor(...))
-    ) {
-        loadImage(image, url, radius, borderWidthPx, intArrayOf(borderColor))
-    }
-
-    @JvmStatic
-    fun loadImage(
-        image: ShapeableImageView,
-        url: String?,
-        radius: Any,
-        borderWidthPx: Float?,
-        @ColorInt borderColor: IntArray? // (Color.RED 或 ContextCompat.getColor(...))
-    ) {
+    fun loadImage(image: ShapeableImageView, url: String?) {
         if (url == null || !isValidContext(image.context)) {
             return
         }
 
-        // 動態設定 ShapeableImageView 的圓角
-        when (radius) {
-            is Float -> {
-                // 如果是 Float，設定四角統一
-                image.shapeAppearanceModel =
-                    image.shapeAppearanceModel.toBuilder().apply {
-                        setAllCornerSizes(radius)
-                    }.build()
-            }
-
-            is FloatArray -> {
-                // 如果是 FloatArray，設定四角獨立
-                if (radius.size >= 4) {
-                    image.shapeAppearanceModel =
-                        image.shapeAppearanceModel.toBuilder().apply {
-                            setTopLeftCornerSize(radius[0])
-                            setTopRightCornerSize(radius[1])
-                            setBottomRightCornerSize(radius[2])
-                            setBottomLeftCornerSize(radius[3])
-                        }.build()
-                }
-            }
-        }
-
-        if (borderWidthPx != null && borderColor != null && borderWidthPx > 0) {
-            val shapeModel = image.shapeAppearanceModel
-            val tl = shapeModel.topLeftCornerSize.getCornerSize(RectF())
-            val tr = shapeModel.topRightCornerSize.getCornerSize(RectF())
-            val br = shapeModel.bottomRightCornerSize.getCornerSize(RectF())
-            val bl = shapeModel.bottomLeftCornerSize.getCornerSize(RectF())
-
-            // 轉換為 Drawable 需要的 8 個數值陣列 [tl_x, tl_y, tr_x, tr_y, ...]
-            val radii = floatArrayOf(tl, tl, tr, tr, br, br, bl, bl)
-
-            // 將自定義的邊框 Drawable 塞入前景
-            image.foreground = InnerBorderDrawable(radii, borderWidthPx, borderColor)
-        } else {
-            image.foreground = null
+        /// 空網址，清除圖片
+        if (url.isBlank() || !isValidContext(image.context)) {
+            image.setImageDrawable(null)
+            return
         }
 
         Glide.with(image)
@@ -269,34 +264,23 @@ class InnerBorderDrawable(
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
 
-fun ShapeableImageView.fitWidth(url: String?) {
-    ImageToolGlide.fitWidth(this, url)
+fun ShapeableImageView.setCornersRadius(radius: Any) {
+    setCornersRadius(this, radius)
 }
+
+fun ShapeableImageView.setBorder(borderWidthPx: Float, @ColorInt borderColor: Int) {
+    setBorder(this, borderWidthPx, intArrayOf(borderColor))
+}
+
+fun ShapeableImageView.setBorder(borderWidthPx: Float, @ColorInt borderColor: IntArray) {
+    setBorder(this, borderWidthPx, borderColor)
+}
+
+fun ShapeableImageView.fitWidth(url: String?) {
+    fitWidth(this, url)
+}
+
 
 fun ShapeableImageView.loadImage(url: String?) {
-    ImageToolGlide.loadImage(this, url)
-}
-
-fun ShapeableImageView.loadImage(url: String?, radius: Float) {
-    ImageToolGlide.loadImage(this, url, radius)
-}
-
-fun ShapeableImageView.loadImage(url: String?, radius: FloatArray) {
-    ImageToolGlide.loadImage(this, url, radius)
-}
-
-fun ShapeableImageView.loadImage(
-    url: String?, radius: Any,
-    borderWidthPx: Float,
-    @ColorInt borderColor: Int
-) {
-    ImageToolGlide.loadImage(this, url, radius, borderWidthPx, borderColor)
-}
-
-fun ShapeableImageView.loadImage(
-    url: String?, radius: Any,
-    borderWidthPx: Float,
-    @ColorInt borderColor: IntArray
-) {
-    ImageToolGlide.loadImage(this, url, radius, borderWidthPx, borderColor)
+    loadImage(this, url)
 }

@@ -28,7 +28,7 @@ import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setBorder
 import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setCornersRadius
 import kotlin.math.max
 
-/***
+/**
  * 圓形 fresco:shapeAppearanceOverlay="@style/CircleShapeStyle"
  */
 object ImageToolGlide {

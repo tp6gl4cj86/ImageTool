@@ -1,54 +1,32 @@
 package tw.com.tp6gl4cj86.image_tool
 
-import android.app.DownloadManager
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Bitmap
-import android.graphics.BitmapShader
 import android.graphics.Canvas
-import android.graphics.Color
+import android.graphics.ColorFilter
 import android.graphics.LinearGradient
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.media.ExifInterface
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.widget.ImageView
 import androidx.annotation.ColorInt
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.imageview.ShapeableImageView
-import java.io.File
-import java.io.IOException
-import java.security.MessageDigest
-import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.min
 
 object ImageToolGlide {
 
     private fun isValidContext(context: Context?): Boolean {
         return !(context == null || (context is android.app.Activity && (context.isDestroyed || context.isFinishing)))
-    }
-
-    @JvmStatic
-    fun removeCache(context: Context, url: String) {
-        // Glide 清除特定 URL 緩存較為複雜，通常清除內存和磁盤緩存
-        // 內存緩存必須在主線程，磁盤緩存必須在背景線程
-        // Glide.get(context).clearMemory()
-        // Thread { Glide.get(context).clearDiskCache() }.start()
     }
 
     @JvmStatic
@@ -154,56 +132,25 @@ object ImageToolGlide {
             }
         }
 
-        // Glide 只需要單純載入圖片和裁切
-        var request = Glide.with(image).load(url)
-        request =
-            if (borderWidthPx != null && borderColor != null && borderWidthPx > 0) {
-                // 動態獲取 ShapeableImageView 的邊框參數
-                val shapeModel = image.shapeAppearanceModel
-                val tl = shapeModel.topLeftCornerSize.getCornerSize(RectF())
-                val tr = shapeModel.topRightCornerSize.getCornerSize(RectF())
-                val br = shapeModel.bottomRightCornerSize.getCornerSize(RectF())
-                val bl = shapeModel.bottomLeftCornerSize.getCornerSize(RectF())
-                request.transform(
-                    CenterCrop(),
-                    InnerBorderTransformation(tl, tr, br, bl, borderWidthPx, borderColor)
-                )
-            } else {
-                request.transform(CenterCrop())
-            }
-        request.into(image)
-    }
+        if (borderWidthPx != null && borderColor != null && borderWidthPx > 0) {
+            val shapeModel = image.shapeAppearanceModel
+            val tl = shapeModel.topLeftCornerSize.getCornerSize(RectF())
+            val tr = shapeModel.topRightCornerSize.getCornerSize(RectF())
+            val br = shapeModel.bottomRightCornerSize.getCornerSize(RectF())
+            val bl = shapeModel.bottomLeftCornerSize.getCornerSize(RectF())
 
-    interface OnDownloadImageListener {
-        fun onDownloadImageDone(bitmap: Bitmap?)
-    }
+            // 轉換為 Drawable 需要的 8 個數值陣列 [tl_x, tl_y, tr_x, tr_y, ...]
+            val radii = floatArrayOf(tl, tl, tr, tr, br, br, bl, bl)
 
-    @JvmStatic
-    fun downloadImage(context: Context, url: String?, listener: OnDownloadImageListener?) {
-        if (url == null || !isValidContext(context)) {
-            listener?.onDownloadImageDone(null)
-            return
+            // 將自定義的邊框 Drawable 塞入前景
+            image.foreground = InnerBorderDrawable(radii, borderWidthPx, borderColor)
+        } else {
+            image.foreground = null
         }
-        val handler = Handler(Looper.getMainLooper())
-        Glide.with(context)
-            .asBitmap()
+
+        Glide.with(image)
             .load(url)
-            .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                    if (!isValidContext(context)) {
-                        handler.post { listener?.onDownloadImageDone(null) }
-                        return
-                    }
-                    val bitmapCopy = resource.copy(resource.config ?: Bitmap.Config.ARGB_8888, true)
-                    handler.post { listener?.onDownloadImageDone(bitmapCopy) }
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {}
-
-                override fun onLoadFailed(errorDrawable: Drawable?) {
-                    handler.post { listener?.onDownloadImageDone(null) }
-                }
-            })
+            .into(image)
     }
 
 
@@ -234,11 +181,7 @@ object ImageToolGlide {
         }
 
         return try {
-            val bitmap = Bitmap.createBitmap(
-                max(1, drawable.intrinsicWidth),
-                max(1, drawable.intrinsicHeight),
-                Bitmap.Config.ARGB_8888
-            )
+            val bitmap = createBitmap(max(1, drawable.intrinsicWidth), max(1, drawable.intrinsicHeight))
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
@@ -253,159 +196,77 @@ object ImageToolGlide {
         if (bitmap == null) {
             return null
         }
-        return BitmapDrawable(context.resources, bitmap)
-    }
-
-    @JvmStatic
-    fun restoreImageOrientation(selectedBitmap: Bitmap, imagePath: String): Bitmap {
-        try {
-            var rotate = 0
-            val imageFile = File(imagePath)
-            val exif = ExifInterface(imageFile.absolutePath)
-            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-
-            when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_270 -> rotate = 270
-                ExifInterface.ORIENTATION_ROTATE_180 -> rotate = 180
-                ExifInterface.ORIENTATION_ROTATE_90 -> rotate = 90
-            }
-
-            if (rotate == 0) {
-                return selectedBitmap
-            }
-
-            val matrix = Matrix()
-            matrix.postRotate(rotate.toFloat())
-
-            return Bitmap.createBitmap(
-                selectedBitmap, 0, 0,
-                selectedBitmap.width, selectedBitmap.height, matrix, true
-            )
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return selectedBitmap
-    }
-
-    @JvmStatic
-    fun scaleCenterCrop(source: Bitmap): Bitmap {
-        val sourceWidth = source.width
-        val sourceHeight = source.height
-        val newWidth = min(sourceWidth, sourceHeight)
-
-        val xScale = newWidth.toFloat() / sourceWidth
-        val yScale = newWidth.toFloat() / sourceHeight
-        val scale = max(xScale, yScale)
-
-        val scaledWidth = scale * sourceWidth
-        val scaledHeight = scale * sourceHeight
-
-        val left = (newWidth - scaledWidth) / 2
-        val top = (newWidth - scaledHeight) / 2
-
-        val targetRect = RectF(left, top, left + scaledWidth, top + scaledHeight)
-
-        val dest = Bitmap.createBitmap(newWidth, newWidth, source.config ?: Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(dest)
-        canvas.drawBitmap(source, null, targetRect, null)
-
-        return dest
-    }
-
-    @JvmStatic
-    fun saveImageFromUrl(
-        context: Context,
-        url: String,
-        imageFileUri: Uri,
-        title: String,
-        description: String
-    ): Long {
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val request = DownloadManager.Request(Uri.parse(url)).apply {
-            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-            setTitle(title)
-            setDescription(description)
-            setDestinationUri(imageFileUri)
-        }
-        return downloadManager.enqueue(request)
+        return bitmap.toDrawable(context.resources)
     }
 }
 
 /// Glide 繪製內 border 工具
-class InnerBorderTransformation(
-    private val radiusTL: Float,
-    private val radiusTR: Float,
-    private val radiusBR: Float,
-    private val radiusBL: Float,
+class InnerBorderDrawable(
+    private val originalRadii: FloatArray, // 保存原始半徑
     private val borderSize: Float,
-    private val borderColors: IntArray // 傳 1 個顏色就是單色，傳 2 個以上就是漸變！
-) : BitmapTransformation() {
+    private val borderColors: IntArray
+) : Drawable() {
 
-    override fun transform(pool: BitmapPool, toTransform: Bitmap, outWidth: Int, outHeight: Int): Bitmap {
-        val width = toTransform.width.toFloat()
-        val height = toTransform.height.toFloat()
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = borderSize
+    }
 
-        // 拿一張乾淨的畫布
-        val bitmap = pool.get(width.toInt(), height.toInt(), Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+    private val path = Path()
+    private val rect = RectF()
 
-        // 1. 畫圓角圖片
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = BitmapShader(toTransform, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+    // 用來存放計算內縮後的半徑
+    private val drawRadii = FloatArray(8)
+
+    override fun onBoundsChange(bounds: Rect) {
+        super.onBoundsChange(bounds)
+        // 取得 View 實際的邊界大小
+        rect.set(bounds)
+
+        // 🔥 2. 核心修正：將繪圖矩形往內縮「邊框寬度的一半」
+        // 這樣畫出來的線條向外擴展時，會剛好貼齊 bounds 邊緣，完全不需要依賴裁切！
+        val inset = borderSize / 2f
+        rect.inset(inset, inset)
+
+        // 🔥 3. 重新計算圓角半徑
+        // 因為矩形內縮了，圓角的弧度也要跟著減去 inset，這樣內外圓弧才會完美平行
+        for (i in originalRadii.indices) {
+            drawRadii[i] = max(0f, originalRadii[i] - inset)
         }
-        val imageRect = RectF(0f, 0f, width, height)
-        val radii = floatArrayOf(
-            radiusTL, radiusTL, radiusTR, radiusTR,
-            radiusBR, radiusBR, radiusBL, radiusBL
-        )
-        val path = Path().apply { addRoundRect(imageRect, radii, Path.Direction.CW) }
-        canvas.drawPath(path, paint)
 
-        // 2. 畫「100% 往內縮」的邊框
-        if (borderSize > 0 && borderColors.isNotEmpty()) {
-            val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = borderSize
-            }
-
-            // 🔥 魔法在這裡：判斷是單色還是漸變色
-            if (borderColors.size == 1) {
-                // 單色邊框
-                borderPaint.color = borderColors[0]
-            } else {
-                // 漸變邊框 (這裡設定為「上到下」的線性漸變)
-                borderPaint.shader = LinearGradient(
-                    0f, 0f, 0f, height, // 從上 (0,0) 到下 (width, height)
-                    borderColors, // 你的顏色陣列 (可包含半透明)
-                    null, // 顏色分佈比例 (傳 null 代表均勻分佈)
-                    Shader.TileMode.CLAMP
-                )
-            }
-
-            // 核心魔法：將邊框矩形往內縮 (Inset) 邊框寬度的一半
-            val inset = borderSize / 2f
-            val borderRect = RectF(inset, inset, width - inset, height - inset)
-
-            // 圓角半徑也要跟著扣掉 Inset
-            val borderRadii = floatArrayOf(
-                max(0f, radiusTL - inset), max(0f, radiusTL - inset),
-                max(0f, radiusTR - inset), max(0f, radiusTR - inset),
-                max(0f, radiusBR - inset), max(0f, radiusBR - inset),
-                max(0f, radiusBL - inset), max(0f, radiusBL - inset)
+        // 設定漸層 (注意：漸層的高度使用原本的 bounds 高度，確保顏色分佈正確)
+        if (borderColors.size == 1) {
+            paint.color = borderColors[0]
+        } else if (borderColors.size > 1) {
+            paint.shader = LinearGradient(
+                0f, 0f, 0f, bounds.height().toFloat(),
+                borderColors,
+                null,
+                Shader.TileMode.CLAMP
             )
-            val borderPath = Path().apply { addRoundRect(borderRect, borderRadii, Path.Direction.CW) }
-            canvas.drawPath(borderPath, borderPaint)
         }
 
-        return bitmap
+        // 建立真正要繪製的路徑
+        path.reset()
+        path.addRoundRect(rect, drawRadii, Path.Direction.CW)
     }
 
-    override fun updateDiskCacheKey(messageDigest: MessageDigest) {
-        // 將顏色陣列轉成字串當作 Cache Key 的一部分，這樣換顏色時 Glide 才會重新繪圖
-        val colorsKey = borderColors.joinToString("_")
-        val id = "InnerBorder_${radiusTL}_${radiusTR}_${radiusBR}_${radiusBL}_${borderSize}_$colorsKey"
-        messageDigest.update(id.toByteArray(CHARSET))
+    override fun draw(canvas: Canvas) {
+        if (borderSize > 0 && borderColors.isNotEmpty()) {
+            canvas.drawPath(path, paint)
+        }
     }
+
+    override fun setAlpha(alpha: Int) {
+        paint.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+        paint.colorFilter = colorFilter
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
 
 fun ShapeableImageView.fitWidth(url: String?) {

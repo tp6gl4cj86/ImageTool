@@ -11,7 +11,7 @@ android {
 	compileSdk 35
 
 	defaultConfig {
-		minSdk 19
+		minSdk 23
 		targetSdk 35
 		versionCode 502
 		versionName versionStr

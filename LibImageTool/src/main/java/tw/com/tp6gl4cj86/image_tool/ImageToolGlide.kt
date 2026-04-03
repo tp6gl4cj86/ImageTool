@@ -52,16 +52,6 @@ object ImageToolGlide {
     }
 
     @JvmStatic
-    fun loadImage(image: ImageView, url: String?) {
-        if (url == null || !isValidContext(image.context)) {
-            return
-        }
-        Glide.with(image)
-            .load(url)
-            .into(image)
-    }
-
-    @JvmStatic
     fun fitWidth(image: ImageView, url: String?) {
         if (url == null || !isValidContext(image.context)) {
             return
@@ -96,6 +86,16 @@ object ImageToolGlide {
                     }
                 }
             })
+    }
+
+    @JvmStatic
+    fun loadImage(image: ImageView, url: String?) {
+        if (url == null || !isValidContext(image.context)) {
+            return
+        }
+        Glide.with(image)
+            .load(url)
+            .into(image)
     }
 
     @JvmStatic
@@ -406,4 +406,36 @@ class InnerBorderTransformation(
         val id = "InnerBorder_${radiusTL}_${radiusTR}_${radiusBR}_${radiusBL}_${borderSize}_$colorsKey"
         messageDigest.update(id.toByteArray(CHARSET))
     }
+}
+
+fun ShapeableImageView.fitWidth(url: String?) {
+    ImageToolGlide.fitWidth(this, url)
+}
+
+fun ShapeableImageView.loadImage(url: String?) {
+    ImageToolGlide.loadImage(this, url)
+}
+
+fun ShapeableImageView.loadImage(url: String?, radius: Float) {
+    ImageToolGlide.loadImage(this, url, radius)
+}
+
+fun ShapeableImageView.loadImage(url: String?, radius: FloatArray) {
+    ImageToolGlide.loadImage(this, url, radius)
+}
+
+fun ShapeableImageView.loadImage(
+    url: String?, radius: Any,
+    borderWidthPx: Float,
+    @ColorInt borderColor: Int
+) {
+    ImageToolGlide.loadImage(this, url, radius, borderWidthPx, borderColor)
+}
+
+fun ShapeableImageView.loadImage(
+    url: String?, radius: Any,
+    borderWidthPx: Float,
+    @ColorInt borderColor: IntArray
+) {
+    ImageToolGlide.loadImage(this, url, radius, borderWidthPx, borderColor)
 }

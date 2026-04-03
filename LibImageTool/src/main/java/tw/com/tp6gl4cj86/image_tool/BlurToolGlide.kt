@@ -9,8 +9,10 @@ import jp.wasabeef.glide.transformations.BlurTransformation
 object BlurToolGlide {
 
     @JvmStatic
-    fun blur(activity: Activity?, mImage: ImageView, url: String?) {
-        blur(activity, 12, mImage, url)
+    fun blur(activity: Activity?, mImage: ImageView?, url: String?) {
+        mImage?.let {
+            blur(activity, 12, mImage, url)
+        }
     }
 
     @JvmStatic

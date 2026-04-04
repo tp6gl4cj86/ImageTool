@@ -4,7 +4,7 @@ plugins {
 	id 'maven-publish'
 }
 
-def versionStr = "5.0.3"
+def versionStr = "5.1.0"
 
 android {
 	namespace = 'tw.com.tp6gl4cj86.image_tool'
@@ -13,7 +13,7 @@ android {
 	defaultConfig {
 		minSdk 23
 		targetSdk 35
-		versionCode 502
+		versionCode 503
 		versionName versionStr
 	}
 	buildTypes {
@@ -39,7 +39,7 @@ dependencies {
 //	api 'jp.co.cyberagent.android:gpuimage:2.1.0'
 
 	// Glide
-	api 'com.github.bumptech.glide:glide:4.16.0'
+	api 'com.github.bumptech.glide:glide:5.0.5'
 	api 'jp.wasabeef:glide-transformations:4.3.0'
 	implementation 'com.google.android.material:material:1.13.0'
 }

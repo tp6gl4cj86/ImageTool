@@ -11,4 +11,4 @@ Add dependency.
 https://jitpack.io/#tp6gl4cj86/ImageTool
 
 # fresco + glide
-v5.1.0-2
+implementation("com.github.tp6gl4cj86:ImageTool:v5.1.0-2")

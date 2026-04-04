@@ -1,7 +1,6 @@
 package tw.com.tp6gl4cj86.image_tool
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorFilter
@@ -47,6 +46,27 @@ object ImageToolGlide {
         thread(start = true) {
             Glide.get(context).clearDiskCache()
         }
+    }
+
+    @JvmStatic
+    fun downloadImage(context: Context, url: String, onDownloadDone: ((Bitmap) -> Unit)? = null) {
+        Glide.with(context)
+            .asBitmap()
+            .load(url)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    onDownloadDone?.invoke(resource)
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    // 資源被清理時觸發
+                }
+
+                override fun onLoadFailed(errorDrawable: Drawable?) {
+                    super.onLoadFailed(errorDrawable)
+                    // 載入失敗處理
+                }
+            })
     }
 
     private fun isValidContext(context: Context?): Boolean {

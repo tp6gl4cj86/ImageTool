@@ -33,11 +33,6 @@ android {
 
 dependencies {
 	api fileTree(dir: 'libs', include: ['*.jar'])
-	api 'com.facebook.fresco:fresco:3.6.0'
-	/// Fresco https://github.com/wasabeef/fresco-processors
-	api 'jp.wasabeef:fresco-processors:2.2.1'
-//	api 'jp.co.cyberagent.android:gpuimage:2.1.0'
-
 	// Glide
 	api 'com.github.bumptech.glide:glide:5.0.5'
 	api 'jp.wasabeef:glide-transformations:4.3.0'

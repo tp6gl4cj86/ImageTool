@@ -14,6 +14,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Looper
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.core.graphics.createBitmap
@@ -26,12 +27,27 @@ import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.fitWidth
 import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.loadImage
 import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setBorder
 import tw.com.tp6gl4cj86.image_tool.ImageToolGlide.setCornersRadius
+import kotlin.concurrent.thread
 import kotlin.math.max
 
 /**
  * 圓形 fresco:shapeAppearanceOverlay="@style/CircleShapeStyle"
  */
 object ImageToolGlide {
+
+    @JvmStatic
+    fun clearAllGlideCache(context: Context) {
+        // 1. 清除記憶體快取 (必須在 Main Thread)
+        // 判斷當前是否在主線程，如果不是，這裡其實應該拋到主線程執行，但實務上通常是按鈕點擊觸發，所以本身就在主線程
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Glide.get(context).clearMemory()
+        }
+
+        // 2. 清除磁碟快取 (必須在 Background Thread)
+        thread(start = true) {
+            Glide.get(context).clearDiskCache()
+        }
+    }
 
     private fun isValidContext(context: Context?): Boolean {
         return !(context == null || (context is android.app.Activity && (context.isDestroyed || context.isFinishing)))
@@ -146,9 +162,16 @@ object ImageToolGlide {
             return
         }
 
+        val flagId = R.id.glide_placeholder_saved_flag
+        val drawableId = R.id.glide_xml_placeholder_drawable
+        if (image.getTag(flagId) != true) {
+            image.setTag(flagId, true)
+            image.setTag(drawableId, image.drawable)
+        }
+
         Glide.with(image)
             .load(url)
-            .placeholder(image.drawable)
+            .placeholder(image.getTag(drawableId) as? Drawable)
             .into(image)
     }
 

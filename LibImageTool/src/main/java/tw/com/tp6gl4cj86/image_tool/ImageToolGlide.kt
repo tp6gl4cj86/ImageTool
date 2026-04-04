@@ -148,6 +148,7 @@ object ImageToolGlide {
 
         Glide.with(image)
             .load(url)
+            .placeholder(image.drawable)
             .into(image)
     }
 

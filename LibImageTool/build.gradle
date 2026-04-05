@@ -4,7 +4,7 @@ plugins {
 	id 'maven-publish'
 }
 
-def versionStr = "6.0.0"
+def versionStr = "6.0.1"
 
 android {
 	namespace = 'tw.com.tp6gl4cj86.image_tool'
@@ -13,7 +13,7 @@ android {
 	defaultConfig {
 		minSdk 23
 		targetSdk 35
-		versionCode 600
+		versionCode 601
 		versionName versionStr
 	}
 	buildTypes {

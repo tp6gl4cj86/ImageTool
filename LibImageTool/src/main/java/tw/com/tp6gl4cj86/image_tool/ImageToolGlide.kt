@@ -19,6 +19,7 @@ import androidx.annotation.ColorInt
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.imageview.ShapeableImageView
@@ -191,6 +192,7 @@ object ImageToolGlide {
 
         Glide.with(image)
             .load(url)
+            .transition(withCrossFade(300))
             .placeholder(image.getTag(drawableId) as? Drawable)
             .into(image)
     }

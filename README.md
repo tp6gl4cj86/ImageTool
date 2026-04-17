@@ -17,4 +17,4 @@ implementation("com.github.tp6gl4cj86:ImageTool:v5.0.3")
 implementation("com.github.tp6gl4cj86:ImageTool:v5.1.0-2")
 
 # glide
-implementation("com.github.tp6gl4cj86:ImageTool:6.0.0")
+implementation("com.github.tp6gl4cj86:ImageTool:6.0.2")

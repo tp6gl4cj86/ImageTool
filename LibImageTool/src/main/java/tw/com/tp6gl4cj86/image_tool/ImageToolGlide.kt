@@ -19,7 +19,10 @@ import androidx.annotation.ColorInt
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.imageview.ShapeableImageView
@@ -192,9 +195,22 @@ object ImageToolGlide {
 
         Glide.with(image)
             .load(url)
-            /// 淡入會被站位圖寬高影響
-            /// .transition(withCrossFade(300))
             .placeholder(image.getTag(drawableId) as? Drawable)
+            .listener(object : RequestListener<Drawable> {
+
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: com.bumptech.glide.request.target.Target<Drawable?>?, isFirstResource: Boolean): Boolean {
+                    return false
+                }
+
+                override fun onResourceReady(drawable: Drawable?, model: Any?, target: com.bumptech.glide.request.target.Target<Drawable?>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    // 如果是從網路或磁碟剛載入的新圖，才執行淡入動畫 (避免快取圖片閃爍)
+                    if (dataSource != DataSource.MEMORY_CACHE) {
+                        image.alpha = 0f
+                        image.animate().alpha(1f).setDuration(300).start()
+                    }
+                    return false
+                }
+            })
             .into(image)
     }
 

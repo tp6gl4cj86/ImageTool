@@ -192,7 +192,8 @@ object ImageToolGlide {
 
         Glide.with(image)
             .load(url)
-            .transition(withCrossFade(300))
+            /// 淡入會被站位圖寬高影響
+            /// .transition(withCrossFade(300))
             .placeholder(image.getTag(drawableId) as? Drawable)
             .into(image)
     }
